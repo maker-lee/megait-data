@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <!--css 입히기-->
+    <style>
+        /* html 태그 방식*/
+        h1 {color:#f0f;}
+        h2 {color:#06f;}
+
+        /**class 방식 .클래스 이름을 붙이고, class='이름'으로 실행한다 */
+        .myclass {color:hwb(41 18% 6%)}
+
+        /** id 방식 #id 이름을 붙인다. id ='이름'dmfh 실행한다. 한 개만 사용할 수 있다. index를 뜻한다*/
+        #myid {color : hwb(26 0% 35%)}
+
+        /** 자식 선택자 */
+        .son > li > ol > li {text-decoration: : underline;}
+
+        /** 자손 선택자*/
+        .sonson ol {
+            font-weight: bold;
+        }
+        .part1 {
+            background-color: #eeeeee;
+        }
+        .part2 {
+            background-color: #dfcdcd;
+        }
+
+        /**특정 대상을 구체적으로 명시 <div class = "sub part1">만 해당*/
+        div.sub.part1 {
+            border: 1px dotted #000;
+            background-color: #592929;
+        }
+        /**특정 대상을 구체적으로 명시 <div class = "sub part2" id="hello">만 해당*/
+
+        div.sub.part2#hello {
+            border: 1px solid #1962a7;
+        }
+
+        /** 특정 속성 값에 대한 적용 */
+        a[href ='#'] {
+            color: green;
+        }
+
+    </style>
+</head>
+
+<body>
+    <h1>Hello World</h1>
+    <a>link0</a>
+    <a href="#">link1</a>
+    <a href="https://www.naver.com">link2</a>
+    <h2 id="myid">Python</h2>
+    <div class = "sub part1">
+        <ul class ="son"> 
+            <li>변수와 데이터 타입</li>
+            <li class = "myclass">연산자</li>
+            <li>연속성 자료형
+                <ol>
+                    <li>리스트(list)</li>
+                    <li>딕셔너리(dict)</li>
+                    <li>집합</li>
+                </ol>
+            </li>
+            <li>프로그램 흐름제어</li>
+            <li>함수</li>
+        </ul>
+    </div>
+    <h2>Data Analysis</h2>
+    <div class = "sub part2" id="hello">
+        <ul>
+            <li>데이터 수집</li>
+            <li class="myclass">데이터 전처리</li>
+            <li>
+                탐색적 데이터 분석
+                <ol class="myclass">
+                    <li>기초통계</li>
+                    <li>데이터 시각화</li>
+                </ol>
+            </li>
+            <li>확증적 데이터 분석</li>
+            <li>데이터 마이닝</li>
+        </ul>
+    </div>
+</body>
+</html>
