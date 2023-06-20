@@ -19,11 +19,14 @@
         #myid {color : hwb(26 0% 35%)}
 
         /** 자식 선택자 */
-        .son > li > ol > li {text-decoration: : underline;}
+        .syllabus > li > ol > li {
+            text-decoration: underline;
+        }
 
         /** 자손 선택자*/
-        .sonson ol {
+        .syllabus ol {
             font-weight: bold;
+
         }
         .part1 {
             background-color: #eeeeee;
@@ -58,10 +61,11 @@
     <a href="https://www.naver.com">link2</a>
     <h2 id="myid">Python</h2>
     <div class = "sub part1">
-        <ul class ="son"> 
+        <ul class ="syllabus"> 
             <li>변수와 데이터 타입</li>
             <li class = "myclass">연산자</li>
-            <li>연속성 자료형
+            <li>
+                연속성 자료형
                 <ol>
                     <li>리스트(list)</li>
                     <li>딕셔너리(dict)</li>
