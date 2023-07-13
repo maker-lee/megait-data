@@ -75,5 +75,18 @@ def setCategory(df,ignore=[]) :
 
 
 
+# 워드클라우드 - 불용어 목록으로 쓰지 않는 단어 정제하기 
+def clearStopwords(nouns, stopwords_file_path="wordcloud/stopwords-ko.txt"): # 불용어 목록이 default 값 
+    with open(stopwords_file_path, 'r', encoding='utf-8') as f: # 불용어 목록을 읽어라 한줄씩 
+        stopwords = f.readlines()
+        
+        for i, v in enumerate(stopwords): # 그런데 한줄 씩 읽으면 엔터가 먹히니까 엔터를 제외한다. 
+            stopwords[i] = v.strip()
 
+    data_set = [] 
 
+    for v in nouns: # nlp.nouns를 사용해 명사들만 추출한 리스트를 불러온다. 
+        if v not in stopwords: # 불용어에 없다면 
+            data_set.append(v) # data_set에 추가한다. 
+
+    return data_set # 정제된 명사 리스트를 반환한다. 
