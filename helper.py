@@ -47,6 +47,7 @@ def setCategory(df,ignore=[]) :
     cdf = df.copy()
     # 데이터 프레임의 변수명을 리스트로 변환
     ilist = list(cdf.dtypes.index)
+    
     # 데이터 프레임의 변수형을 리스트로 변환
     vlist = list(cdf.dtypes.values)
 
