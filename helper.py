@@ -91,3 +91,27 @@ def clearStopwords(nouns, stopwords_file_path="wordcloud/stopwords-ko.txt"): # �
             data_set.append(v) # data_set에 추가한다. 
 
     return data_set # 정제된 명사 리스트를 반환한다. 
+
+
+
+
+
+
+from math import sqrt
+
+
+# 신뢰구간 구하는 함수 
+# 데이터와 신뢰수준을 (인자)로 주었을때, 
+
+def get_confidence_interval(data, clevel=0.95):
+    n = len(data)                           # 샘플 사이즈
+    dof = n - 1                             # 자유도
+    sample_mean = data.mean()               # 표본 평균
+    sample_std = data.std(ddof=1)           # 표본 표준 편차
+    sample_std_error = sample_std / sqrt(n) # 표본 표준오차
+
+    # 신뢰구간
+    cmin, cmax = t.interval(clevel, dof, loc=sample_mean, scale=sample_std_error)
+    
+    return (cmin, cmax)
+    
