@@ -122,6 +122,19 @@ def get_confidence_interval(data, clevel=0.95):
 
 
 
+
+
+
+# F-검정을 수행하기 위해서는 3개의 가정이 필요하다.
+# 정규분포를 따르라(정규성)/동일한 분산을 가져라(등분산성)/서로 영향을 주지마라 (독립성)
+# 아래는 그 조건들을 확인하는 함수 
+
+# F-검정(분산분석)의 조건 충족 여부 검사 
+
+# 모수 검정에서는 각 집단의 데이터에 정규성이 있어야 하는데 정규성을 조사하는 방법에는 샤프로 윌크,콜모고르프-스미르노트,normaltest가 있다. 정규성을 조사하고 그 다음 t검정(평균 확인)을 사용
+
+
+# 정규성 검정 
 def normality_test(*any):
     names = []
 
@@ -131,14 +144,14 @@ def normality_test(*any):
         'result': []
     }
     for i in any:
-        s, p = shapiro(i)
+        s, p = shapiro(i)  # 샤피로 검정 : 샘플의 수가 적을 때 
         result['statistic'].append(s)
         result['p-value'].append(p)
         result['result'].append(p > 0.05)
         names.append(('정규성', 'shapiro', i.name))
 
     for i in any:
-        s, p = normaltest(i)
+        s, p = normaltest(i) # normal 검정 
         result['statistic'].append(s)
         result['p-value'].append(p)
         result['result'].append(p > 0.05)
@@ -149,7 +162,7 @@ def normality_test(*any):
     for i in range(0, n):
         j = i + 1 if i < n - 1 else 0
 
-        s, p = ks_2samp(any[i], any[j])
+        s, p = ks_2samp(any[i], any[j]) # 콜모고로프-스미르노프 검정 : 한번에 두개씩 검사 
         result['statistic'].append(s)
         result['p-value'].append(p)
         result['result'].append(p > 0.05)
@@ -158,11 +171,17 @@ def normality_test(*any):
     return DataFrame(result, index=MultiIndex.from_tuples(names, names=['condition', 'test', 'field']))
 
 
+
+
+# 등분산성 검정 
+
+# t검정과 f검정에는 데이터가 분산이 같은 모집단에서부터 획득되었다는 조건이 필요하므로 분산이 같다는 가설을 검정하는 방법으로 바틀렛검정과 레빈 검정이 있다. 
+
 def equal_variance_test(*any):
     # statistic=1.333315753388535, pvalue=0.2633161881599037
-    s1, p1 = bartlett(*any)
-    s2, p2 = fligner(*any)
-    s3, p3 = levene(*any)
+    s1, p1 = bartlett(*any) # 3집단 이상 사용가능  
+    s2, p2 = fligner(*any) # 비모수 등분산 검정
+    s3, p3 = levene(*any) # 비모수 등분산 가능 
 
     names = []
 
@@ -181,27 +200,45 @@ def equal_variance_test(*any):
 
     return df
 
+
+
+
+
+# 독립성 검정 
+
 def independence_test(*any):
-    df = DataFrame(any).T
-    result = chi2_contingency(df)
+    df = DataFrame(any).T # 내가 준 데이터프레임만 묶어서 행/열 변환
+    result = chi2_contingency(df) # 독립성 검정 
 
     names = []
 
     for i in any:
-        names.append(i.name)
+        names.append(i.name) # 파라미터로 전달된 columns
 
-    fix = " vs "
-    name = fix.join(names)
+    fix = " vs " # 조인 안에 들어갈 내용
+    name = fix.join(names) # 파라미터로 전달된 columns를 리스트로 묶음. 가운데에 vs 넣고. 
 
-    index = [['독립성', 'Chi2', name]]
+    index = [['독립성', 'Chi2', name]] # 멀티 인덱스를 쓰기 위해서 [[]] 이차원 리스트로 삽입
 
     df = DataFrame({
-        'statistic': [result.statistic],
+        'statistic': [result.statistic], 
         'p-value': [result.pvalue],
         'result': [result.pvalue > 0.05]
-    }, index=MultiIndex.from_tuples(index, names=['condition', 'test', 'field']))
+    }, index=MultiIndex.from_tuples(index, names=['condition', 'test', 'field'])) # 데이터프레임의 인덱스를 여러개로 만든다. 
 
     return df
 
+
+
+
+
+# F-검정을 수행하기 위해서는 3개의 가정이 필요하다.
+# 정규분포를 따르라(정규성)/동일한 분산을 가져라(등분산성)/서로 영향을 주지마라 (독립성)
+# 모든 조건을 하나의 함수로 확인하기 (concat을 사용하여 위에 3개 검정이 다 똑같으니까)
+
 def all_test(*any):
     return concat([normality_test(*any), equal_variance_test(*any), independence_test(*any)])
+
+
+
+
