@@ -2,7 +2,7 @@
 import numpy as np
 from pandas import DataFrame, MultiIndex, concat
 from math import sqrt
-from scipy.stats import t, pearsonr
+from scipy.stats import t, pearsonr, spearmanr
 from sklearn.impute import SimpleImputer
 from scipy.stats import shapiro, normaltest, ks_2samp, bartlett, fligner, levene, chi2_contingency
 
@@ -256,6 +256,30 @@ def pearson_r(df):
 
         fields = names[i] + ' vs ' + names[j]
         s, p = pearsonr(df[names[i]], df[names[j]])
+        result = p < pv
+
+        data.append({'fields': fields, 'statistic': s, 'pvalue': p, 'result': result})
+
+    rdf = DataFrame(data)
+    rdf.set_index('fields', inplace=True)
+    
+    return rdf
+
+
+# 스피어만 상관계수 분석 
+def spearman_r(df):
+    names = df.columns
+    n = len(names)
+    pv = 0.05
+
+    data = []
+
+    for i in range(0, n):
+        # 기본적으로 i 다음 위치를 의미하지만 i가 마지막 인덱스일 경우 0으로 설정
+        j = i + 1 if i < n - 1 else 0
+
+        fields = names[i] + ' vs ' + names[j]
+        s, p = spearmanr(df[names[i]], df[names[j]])
         result = p < pv
 
         data.append({'fields': fields, 'statistic': s, 'pvalue': p, 'result': result})
