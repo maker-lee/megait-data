@@ -1,7 +1,3 @@
-"""
-통계분석 유틸리티
-@Author: 이광호(leekh4232@gmail.com)
-"""
 import numpy as np
 from pandas import DataFrame, MultiIndex, concat
 from math import sqrt
@@ -25,6 +21,7 @@ def getIq(field):
     -------
     - 결측치경계: 이상치 경계값 리스트
     """
+
     q1 = field.quantile(q=0.25)
     q3 = field.quantile(q=0.75)
     iqr = q3 - q1
@@ -384,7 +381,6 @@ def spearman_r(df):
 
     return rdf
 
-
 def ext_ols(data, y, x):
     """
     회귀분석을 수행한다.
@@ -431,8 +427,8 @@ def ext_ols(data, y, x):
 
     # 두 번째 표의 내용을 딕셔너리로 분해하여 my에 추가
     my['variables'] = []
-    name_list = list(data.columns) # 수정
-    print(name_list)
+    name_list = list(data.columns)
+    #print(name_list)
 
     for i, v in enumerate(summary.tables[1].data):
         if i == 0:
@@ -440,13 +436,14 @@ def ext_ols(data, y, x):
 
         # 변수의 이름
         name = v[0].strip()
+
         vif = 0
 
-        # 0번째인 Intercept는 제외
-        if name in name_list :
-            # 변수의 이름 목록에서 현재 변수가 몇번째 항목인지 찾기
+        # Intercept는 제외
+        if name in name_list:
+            # 변수의 이름 목록에서 현재 변수가 몇 번째 항목인지 찾기 
             j = name_list.index(name)
-            vif = variance_inflation_factor(data,j) #df 원본
+            vif = variance_inflation_factor(data, j)
 
         my['variables'].append({
             "name": name,
@@ -502,12 +499,13 @@ def ext_ols(data, y, x):
 
         varstr.append(k)
 
-    # 리턴
+    # 리턴할
     return (model, fit, summary, table, result, goodness, varstr)
 
 
-class OlsResult :
-    def __init__(self) :
+
+class OlsResult:
+    def __init__(self):
         self._model = None
         self._fit = None
         self._summary = None
@@ -516,39 +514,46 @@ class OlsResult :
         self._goodness = None
         self._varstr = None
 
-    @property # 함수 두 개를 묶어서 변수처럼 사용하게 함 
-    def model(self) :
-        '''
+    @property
+    def model(self):
+        """
         분석모델
-        '''
+        """
         return self._model
-    
+
     @model.setter
-    def model(self,value):
+    def model(self, value):
         self._model = value
 
+    @property
+    def fit(self):
+        """
+        분석결과 객체
+        """
+        return self._fit
+
     @fit.setter
-    def fit(self,value) :
+    def fit(self, value):
         self._fit = value
 
     @property
-    def summary(self) :
-        '''
-        분석결과 요약 보고 
-        '''
+    def summary(self):
+        """
+        분석결과 요약 보고
+        """
         return self._summary
-    
+
     @summary.setter
-    def summary(self,value):
+    def summary(self, value):
         self._summary = value
-    
+
     @property
-    def table(self) :
-        '''
+    def table(self):
+        """
         결과표
-        '''
+        """
         return self._table
-    
+
     @table.setter
     def table(self, value):
         self._table = value
@@ -587,15 +592,15 @@ class OlsResult :
         self._varstr = value
 
 
-def my_ols(data,y,x) :
-    model,fit,summary,table,result,goodness,varstr = ext_ols(data,y,x)
+def my_ols(data, y, x):
+    model, fit, summary, table, result, goodness, varstr = ext_ols(data, y, x)
 
     ols_result = OlsResult()
     ols_result.model = model
     ols_result.fit = fit
     ols_result.summary = summary
     ols_result.table = table
-    ols_result.result = result 
+    ols_result.result = result
     ols_result.goodness = goodness
     ols_result.varstr = varstr
 
