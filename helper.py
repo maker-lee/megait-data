@@ -1,7 +1,3 @@
-"""
-통계분석 유틸리티
-@Author: 이광호(leekh4232@gmail.com)
-"""
 import numpy as np
 from pandas import DataFrame, MultiIndex, concat, merge
 from math import sqrt
@@ -15,7 +11,6 @@ from sklearn.preprocessing import StandardScaler
 from pca import pca
 from statsmodels.formula.api import logit
 from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score, accuracy_score, recall_score, precision_score, f1_score
-
 
 
 def getIq(field):
@@ -37,7 +32,6 @@ def getIq(field):
     상한 = q3 + 1.5 * iqr
     결측치경계 = [하한, 상한]
     return 결측치경계
-
 
 def replaceOutlier(df, fieldName):
     """
@@ -65,7 +59,6 @@ def replaceOutlier(df, fieldName):
 
     return cdf
 
-
 def replaceMissingValue(df, strategy='mean'):
     """
     결측치 정제
@@ -83,7 +76,6 @@ def replaceMissingValue(df, strategy='mean'):
     df_imr = imr.fit_transform(df.values)
     re_df = DataFrame(df_imr, index=df.index, columns=df.columns)
     return re_df
-
 
 def setCategory(df, fields=[]):
     """
@@ -121,18 +113,13 @@ def setCategory(df, fields=[]):
 
             # 인덱스 이름순으로 정렬된 값의 종류별로 반복 처리
             for ii, vv in enumerate(list(vc.index)):
-                # 일련번호값 생성
-                vnum = ii + 1
-                # print(vv, " -->", vnum)
-
                 # 일련번호값으로 치환
-                cdf.loc[cdf[field_name] == vv, field_name] = vnum
+                cdf.loc[cdf[field_name] == vv, field_name] = ii
 
             # 해당 변수의 데이터 타입을 범주형으로 변환
             cdf[field_name] = cdf[field_name].astype('category')
 
     return cdf
-
 
 def clearStopwords(nouns, stopwords_file_path="wordcloud/stopwords-ko.txt"):
     """
@@ -161,7 +148,6 @@ def clearStopwords(nouns, stopwords_file_path="wordcloud/stopwords-ko.txt"):
 
     return data_set
 
-
 def get_confidence_interval(data, clevel=0.95):
     """
     신뢰구간 계산
@@ -187,7 +173,6 @@ def get_confidence_interval(data, clevel=0.95):
         clevel, dof, loc=sample_mean, scale=sample_std_error)
 
     return (cmin, cmax)
-
 
 def normality_test(*any):
     """
@@ -235,7 +220,6 @@ def normality_test(*any):
 
     return DataFrame(result, index=MultiIndex.from_tuples(names, names=['condition', 'test', 'field']))
 
-
 def equal_variance_test(*any):
     """
     분산분석을 수행하기 위한 등분산성을 검정 한다.
@@ -270,7 +254,6 @@ def equal_variance_test(*any):
 
     return df
 
-
 def independence_test(*any):
     """
     분산분석을 수행하기 위한 독립성을 검정한다.
@@ -304,7 +287,6 @@ def independence_test(*any):
 
     return df
 
-
 def all_test(*any):
     """
     정규성, 등분산성, 독립성을 모두 검정한다.
@@ -318,7 +300,6 @@ def all_test(*any):
     - df: 검정 결과 데이터 프레임
     """
     return concat([normality_test(*any), equal_variance_test(*any), independence_test(*any)])
-
 
 def pearson_r(df):
     """
@@ -354,7 +335,6 @@ def pearson_r(df):
 
     return rdf
 
-
 def spearman_r(df):
     """
     스피어만 상관계수를 사용하여 상관분석을 수행한다.
@@ -389,9 +369,96 @@ def spearman_r(df):
 
     return rdf
 
-def ext_ols(data, y, x):
+class OlsResult:
+    def __init__(self):
+        self._model = None
+        self._fit = None
+        self._summary = None
+        self._table = None
+        self._result = None
+        self._goodness = None
+        self._varstr = None
+
+    @property
+    def model(self):
+        """
+        분석모델
+        """
+        return self._model
+
+    @model.setter
+    def model(self, value):
+        self._model = value
+
+    @property
+    def fit(self):
+        """
+        분석결과 객체
+        """
+        return self._fit
+
+    @fit.setter
+    def fit(self, value):
+        self._fit = value
+
+    @property
+    def summary(self):
+        """
+        분석결과 요약 보고
+        """
+        return self._summary
+
+    @summary.setter
+    def summary(self, value):
+        self._summary = value
+
+    @property
+    def table(self):
+        """
+        결과표
+        """
+        return self._table
+
+    @table.setter
+    def table(self, value):
+        self._table = value
+
+    @property
+    def result(self):
+        """
+        결과표 부가 설명
+        """
+        return self._result
+
+    @result.setter
+    def result(self, value):
+        self._result = value
+
+    @property
+    def goodness(self):
+        """
+        모형 적합도 보고
+        """
+        return self._goodness
+
+    @goodness.setter
+    def goodness(self, value):
+        self._goodness = value
+
+    @property
+    def varstr(self):
+        """
+        독립변수 보고
+        """
+        return self._varstr
+
+    @varstr.setter
+    def varstr(self, value):
+        self._varstr = value
+
+def my_ols(data, y, x):
     """
-    회귀분석을 수해한다.
+    회귀분석을 수행한다.
 
     Parameters
     -------
@@ -507,102 +574,6 @@ def ext_ols(data, y, x):
 
         varstr.append(k)
 
-    # 리턴할
-    return (model, fit, summary, table, result, goodness, varstr)
-
-
-
-class OlsResult:
-    def __init__(self):
-        self._model = None
-        self._fit = None
-        self._summary = None
-        self._table = None
-        self._result = None
-        self._goodness = None
-        self._varstr = None
-
-    @property
-    def model(self):
-        """
-        분석모델
-        """
-        return self._model
-
-    @model.setter
-    def model(self, value):
-        self._model = value
-
-    @property
-    def fit(self):
-        """
-        분석결과 객체
-        """
-        return self._fit
-
-    @fit.setter
-    def fit(self, value):
-        self._fit = value
-
-    @property
-    def summary(self):
-        """
-        분석결과 요약 보고
-        """
-        return self._summary
-
-    @summary.setter
-    def summary(self, value):
-        self._summary = value
-
-    @property
-    def table(self):
-        """
-        결과표
-        """
-        return self._table
-
-    @table.setter
-    def table(self, value):
-        self._table = value
-
-    @property
-    def result(self):
-        """
-        결과표 부가 설명
-        """
-        return self._result
-
-    @result.setter
-    def result(self, value):
-        self._result = value
-
-    @property
-    def goodness(self):
-        """
-        모형 적합도 보고
-        """
-        return self._goodness
-
-    @goodness.setter
-    def goodness(self, value):
-        self._goodness = value
-
-    @property
-    def varstr(self):
-        """
-        독립변수 보고
-        """
-        return self._varstr
-
-    @varstr.setter
-    def varstr(self, value):
-        self._varstr = value
-
-
-def my_ols(data, y, x):
-    model, fit, summary, table, result, goodness, varstr = ext_ols(data, y, x)
-
     ols_result = OlsResult()
     ols_result.model = model
     ols_result.fit = fit
@@ -622,7 +593,7 @@ def scalling(df, yname=None):
     -------
     - df: 데이터 프레임
     - yname: 종속변수 이름
-    - yname이 없다면 df를 복사
+
     Returns
     -------
     - x_train_std_df: 표준화된 독립변수 데이터 프레임
@@ -646,8 +617,6 @@ def scalling(df, yname=None):
 
     return result
 
-
-
 def get_best_features(x_train_std_df):
     pca_model = pca()
     fit = pca_model.fit_transform(x_train_std_df)
@@ -657,7 +626,6 @@ def get_best_features(x_train_std_df):
     feature = list(set(list(best['feature'])))
     
     return (feature, topfeat_df)
-
 
 class LogitResult:
     def __init__(self):
@@ -726,6 +694,7 @@ class LogitResult:
         self._odds_rate_df = value
 
 
+
 def my_logit(data, y, x):
     """
     로지스틱 회귀분석을 수행한다.
@@ -735,6 +704,7 @@ def my_logit(data, y, x):
     - data : 데이터 프레임
     - y: 종속변수 이름
     - x: 독립변수의 이름들(리스트)
+    - y: OUTcome 합격여부 등 
     """
 
     # 데이터프레임 복사
@@ -763,27 +733,27 @@ def my_logit(data, y, x):
     df['예측결과'] = df['예측값'] > 0.5
 
     # 혼동행렬
-    cm = confusion_matrix(df['합격여부'], df['예측결과'])
+    cm = confusion_matrix(df[y], df['예측결과'])
     tn, fp, fn, tp = cm.ravel()
     cmdf = DataFrame([[tn, tp], [fn, fp]], index=['True', 'False'], columns=['Negative', 'Positive'])
 
     # RAS
-    ras = roc_auc_score(df['합격여부'], df['예측결과'])
+    ras = roc_auc_score(df[y], df['예측결과'])
 
     # 위양성율, 재현율, 임계값(사용안함)
-    fpr, tpr, thresholds = roc_curve(df['합격여부'], df['예측결과'])
+    fpr, tpr, thresholds = roc_curve(df[y], df['예측결과'])
 
     # 정확도
-    acc = accuracy_score(df['합격여부'], df['예측결과'])
+    acc = accuracy_score(df[y], df['예측결과'])
 
     # 정밀도
-    pre = precision_score(df['합격여부'], df['예측결과'])
+    pre = precision_score(df[y], df['예측결과'])
 
     # 재현율
-    recall = recall_score(df['합격여부'], df['예측결과'])
+    recall = recall_score(df[y], df['예측결과'])
 
     # F1 score
-    f1 = f1_score(df['합격여부'], df['예측결과'])
+    f1 = f1_score(df[y], df['예측결과'])
 
     # 위양성율
     fallout = fp / (fp + tn)
