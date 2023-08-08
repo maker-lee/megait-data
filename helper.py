@@ -1,5 +1,6 @@
+
 import numpy as np
-from pandas import DataFrame, MultiIndex, concat
+from pandas import DataFrame, MultiIndex, concat, DatetimeIndex
 from math import sqrt
 from scipy.stats import t, pearsonr, spearmanr
 from sklearn.impute import SimpleImputer
@@ -21,10 +22,10 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from tabulate import tabulate
 
 
-def pretty_print(df, headers="keys", tablefmt="psql", numalign="right"):
+def prettyPrint(df, headers="keys", tablefmt="psql", numalign="right"):
     print(tabulate(df, headers=headers, tablefmt=tablefmt, numalign=numalign))
 
-def get_iq(field, is_print=True):
+def getIq(field, isPrint=True):
     """
     IQR(Interquartile Range)를 이용한 이상치 경계값 계산
 
@@ -47,12 +48,12 @@ def get_iq(field, is_print=True):
         "극단치 경계": [하한, 상한]
     }, index=['하한', '상한'])
 
-    if is_print:
-        pretty_print(df)
+    if isPrint:
+        prettyPrint(df)
     else:
         return 극단치경계
 
-def replace_outlier(df, fieldName):
+def replaceOutlier(df, fieldName):
     """
     이상치를 판별하여 결측치로 치환
 
@@ -72,13 +73,13 @@ def replace_outlier(df, fieldName):
         fieldName = [fieldName]
 
     for f in fieldName:
-        결측치경계 = get_iq(cdf[f])
+        결측치경계 = getIq(cdf[f])
         cdf.loc[cdf[f] < 결측치경계[0], f] = np.nan
         cdf.loc[cdf[f] > 결측치경계[1], f] = np.nan
 
     return cdf
 
-def replace_missing_value(df, strategy='mean'):
+def replaceMissingValue(df, strategy='mean'):
     """
     결측치 정제
 
@@ -96,7 +97,7 @@ def replace_missing_value(df, strategy='mean'):
     re_df = DataFrame(df_imr, index=df.index, columns=df.columns)
     return re_df
 
-def set_category(df, fields=[]):
+def setCategory(df, fields=[]):
     """
     데이터 프레임에서 지정된 필드를 범주형으로 변경한다.
 
@@ -140,7 +141,7 @@ def set_category(df, fields=[]):
 
     return cdf
 
-def clear_stopwords(nouns, stopwords_file_path="wordcloud/stopwords-ko.txt"):
+def clearStopwords(nouns, stopwords_file_path="wordcloud/stopwords-ko.txt"):
     """
     불용어를 제거한다.
 
@@ -167,7 +168,7 @@ def clear_stopwords(nouns, stopwords_file_path="wordcloud/stopwords-ko.txt"):
 
     return data_set
 
-def get_confidence_interval(data, clevel=0.95, is_print=True):
+def getConfidenceInterval(data, clevel=0.95, isPrint=True):
     """
     신뢰구간 계산
 
@@ -191,16 +192,16 @@ def get_confidence_interval(data, clevel=0.95, is_print=True):
     cmin, cmax = t.interval(
         clevel, dof, loc=sample_mean, scale=sample_std_error)
 
-    if is_print:
+    if isPrint:
         df = DataFrame({
             "신뢰구간": [cmin, cmax]
         }, index=['하한', '상한'])
 
-        pretty_print(df)
+        prettyPrint(df)
     else:
         return (cmin, cmax)
 
-def normality_test(*any, is_print=True):
+def normalityTest(*any, isPrint=True):
     """
     분산분석을 수행하기 위한 정규성을 검정 한다.
 
@@ -254,12 +255,12 @@ def normality_test(*any, is_print=True):
 
     rdf = DataFrame(result, index=names)
 
-    if is_print:
-        pretty_print(rdf)
+    if isPrint:
+        prettyPrint(rdf)
     else:
         return rdf
 
-def equal_variance_test(*any, is_print=True):
+def equalVarianceTest(*any, isPrint=True):
     """
     분산분석을 수행하기 위한 등분산성을 검정 한다.
 
@@ -292,12 +293,12 @@ def equal_variance_test(*any, is_print=True):
         'result': [p1 > 0.05, p2 > 0.05, p3 > 0.05]
     }, index=index)
 
-    if is_print:
-        pretty_print(df)
+    if isPrint:
+        prettyPrint(df)
     else:
         return df
 
-def independence_test(*any, is_print=True):
+def independenceTest(*any, isPrint=True):
     """
     분산분석을 수행하기 위한 독립성을 검정한다.
 
@@ -330,12 +331,12 @@ def independence_test(*any, is_print=True):
         'result': [result.pvalue > 0.05]
     }, index=index)
 
-    if is_print:
-        pretty_print(df)
+    if isPrint:
+        prettyPrint(df)
     else:
         return df
 
-def all_test(*any, is_print=True):
+def allTest(*any, isPrint=True):
     """
     정규성, 등분산성, 독립성을 모두 검정한다.
 
@@ -347,14 +348,14 @@ def all_test(*any, is_print=True):
     -------
     - df: 검정 결과 데이터 프레임
     """
-    cc = concat([normality_test(*any), equal_variance_test(*any), independence_test(*any)])
+    cc = concat([normalityTest(*any, isPrint=False), equalVarianceTest(*any, isPrint=False), independenceTest(*any, isPrint=False)])
 
-    if is_print:
-        pretty_print(cc)
+    if isPrint:
+        prettyPrint(cc)
     else:
         return cc
 
-def pearson_r(df, is_print=True):
+def pearson_r(df, isPrint=True):
     """
     피어슨 상관계수를 사용하여 상관분석을 수행한다.
 
@@ -386,12 +387,12 @@ def pearson_r(df, is_print=True):
     rdf = DataFrame(data)
     rdf.set_index('fields', inplace=True)
 
-    if is_print:
-        pretty_print(rdf)
+    if isPrint:
+        prettyPrint(rdf)
     else:
         return rdf
 
-def spearman_r(df, is_print=True):
+def spearman_r(df, isPrint=True):
     """
     스피어만 상관계수를 사용하여 상관분석을 수행한다.
 
@@ -423,8 +424,8 @@ def spearman_r(df, is_print=True):
     rdf = DataFrame(data)
     rdf.set_index('fields', inplace=True)
 
-    if is_print:
-        pretty_print(rdf)
+    if isPrint:
+        prettyPrint(rdf)
     else:
         return rdf
 
@@ -515,7 +516,7 @@ class OlsResult:
     def varstr(self, value):
         self._varstr = value
 
-def my_ols(data, y, x):
+def myOls(data, y, x):
     """
     회귀분석을 수행한다.
 
@@ -676,7 +677,7 @@ def scalling(df, yname=None):
 
     return result
 
-def get_best_features(x_train_std_df):
+def getBestFeatures(x_train_std_df):
     pca_model = pca()
     fit = pca_model.fit_transform(x_train_std_df)
     topfeat_df = fit['topfeat']
@@ -752,7 +753,7 @@ class LogitResult:
     def odds_rate_df(self, value):
         self._odds_rate_df = value
 
-def my_ols(data, y, x, subset=None):
+def myLogit(data, y, x, subset=None):
     """
     로지스틱 회귀분석을 수행한다.
 
@@ -837,7 +838,7 @@ def my_ols(data, y, x, subset=None):
 
     return logit_result
     
-def exp_time_data(data, yname, sd_model="m", max_diff=1):
+def expTimeData(data, yname, sd_model="m", max_diff=1):
     plt.rcParams["font.family"] = 'AppleGothic' if sys.platform == 'darwin' else 'Malgun Gothic'
     plt.rcParams["font.size"] = 12
     plt.rcParams["axes.unicode_minus"] = False
@@ -930,3 +931,38 @@ def exp_time_data(data, yname, sd_model="m", max_diff=1):
         count += 1
         if count == max_diff:
             break
+
+def exp_time_data(data, yname, sd_model="m", max_diff=1):
+    expTimeData(data, yname, sd_model, max_diff)
+    
+
+    
+def set_datetime_index(df, field=None, inplace=False):
+    """
+        데이터 프레임의 인덱스를 datetime 형식으로 변환
+
+        Parameters
+        -------
+        - df: 데이터 프레임
+        - inplace: 원본 데이터 프레임에 적용 여부
+
+        Returns
+        -------
+        - 인덱스가 datetime 형식으로 변환된 데이터 프레임
+    """
+    
+    if inplace:
+        if field is not None:
+            df.set_index(field, inplace=True)
+            
+        df.index = DatetimeIndex(df.index.values, freq=df.index.inferred_freq)
+        df.sort_index(inplace=True)
+    else:
+        cdf = df.copy()
+        
+        if field is not None:
+            cdf.set_index(field, inplace=True)
+            
+        cdf.index = DatetimeIndex(cdf.index.values, freq=cdf.index.inferred_freq)
+        cdf.sort_index(inplace=True)
+        return cdf
