@@ -516,6 +516,8 @@ class OlsResult:
     def varstr(self, value):
         self._varstr = value
 
+
+
 def myOls(data, y, x):
     """
     회귀분석을 수행한다.
