@@ -1,6 +1,5 @@
-
 import numpy as np
-from pandas import DataFrame, MultiIndex, concat, DatetimeIndex
+from pandas import DataFrame, MultiIndex, concat, DatetimeIndex, Series
 from math import sqrt
 from scipy.stats import t, pearsonr, spearmanr
 from sklearn.impute import SimpleImputer
@@ -22,7 +21,11 @@ from statsmodels.tsa.seasonal import seasonal_decompose
 from tabulate import tabulate
 
 
-def prettyPrint(df, headers="keys", tablefmt="psql", numalign="right"):
+def prettyPrint(df, headers="keys", tablefmt="psql", numalign="right", title="value"):
+    
+    if isinstance(df, Series):
+        df = DataFrame(df, columns=[title])
+        
     print(tabulate(df, headers=headers, tablefmt=tablefmt, numalign=numalign))
 
 def getIq(field, isPrint=True):
@@ -97,7 +100,7 @@ def replaceMissingValue(df, strategy='mean'):
     re_df = DataFrame(df_imr, index=df.index, columns=df.columns)
     return re_df
 
-def setCategory(df, fields=[]):
+def setCategory(df, fields=[], labelling=True):
     """
     데이터 프레임에서 지정된 필드를 범주형으로 변경한다.
 
@@ -128,16 +131,25 @@ def setCategory(df, fields=[]):
                 continue
 
             # 가져온 변수명에 대해 값의 종류별로 빈도를 카운트 한 후 인덱스 이름순으로 정렬
-            vc = cdf[field_name].value_counts().sort_index()
+            #vc = cdf[field_name].value_counts().sort_index()
             # print(vc)
 
             # 인덱스 이름순으로 정렬된 값의 종류별로 반복 처리
-            for ii, vv in enumerate(list(vc.index)):
+            #for ii, vv in enumerate(list(vc.index)):
                 # 일련번호값으로 치환
-                cdf.loc[cdf[field_name] == vv, field_name] = ii
+                #cdf.loc[cdf[field_name] == vv, field_name] = ii
 
             # 해당 변수의 데이터 타입을 범주형으로 변환
             cdf[field_name] = cdf[field_name].astype('category')
+            
+            if labelling:
+                mydict = {}
+                
+                for i, v in enumerate(cdf[field_name].dtypes.categories):
+                    mydict[v] = i
+                
+                print(mydict)
+                cdf[field_name] = cdf[field_name].map(mydict).astype(int)
 
     return cdf
 
@@ -516,11 +528,9 @@ class OlsResult:
     def varstr(self, value):
         self._varstr = value
 
-
-
-def myOls(data, y, x):
+def myOls(data, y=None, x=None, expr=None):
     """
-    회귀분석을 수행한다.
+    로지스틱 회귀분석을 수행한다.
 
     Parameters
     -------
@@ -529,12 +539,27 @@ def myOls(data, y, x):
     - x: 독립변수의 이름들(리스트)
     """
 
-    # 독립변수의 이름이 리스트가 아니라면 리스트로 변환
-    if type(x) != list:
-        x = [x]
+    # 데이터프레임 복사
+    df = data.copy()
 
     # 종속변수~독립변수1+독립변수2+독립변수3+... 형태의 식을 생성
-    expr = "%s~%s" % (y, "+".join(x))
+    if not expr:
+        # 독립변수의 이름이 리스트가 아니라면 리스트로 변환
+        if type(x) != list:
+            x = [x]
+        expr = "%s~%s" % (y, "+".join(x))
+    else:
+        x = []
+        p = expr.find('~')
+        y = expr[:p].strip()
+        x_tmp = expr[p+1:]
+        x_list = x_tmp.split('+')
+            
+        for i in x_list:
+            k = i.strip()
+                
+            if k:
+                x.append(k)
 
     # 회귀모델 생성
     model = ols(expr, data=data)
@@ -936,8 +961,6 @@ def expTimeData(data, yname, sd_model="m", max_diff=1):
 
 def exp_time_data(data, yname, sd_model="m", max_diff=1):
     expTimeData(data, yname, sd_model, max_diff)
-    
-
     
 def set_datetime_index(df, field=None, inplace=False):
     """
