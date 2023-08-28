@@ -1,24 +1,31 @@
-import numpy as np
-from pandas import DataFrame, MultiIndex, concat, DatetimeIndex, Series
-from math import sqrt
-from scipy.stats import t, pearsonr, spearmanr
-from sklearn.impute import SimpleImputer
-from scipy.stats import shapiro, normaltest, ks_2samp, bartlett, fligner, levene, chi2_contingency
-from statsmodels.formula.api import ols
-from statsmodels.stats.outliers_influence import variance_inflation_factor
-from sklearn.preprocessing import StandardScaler
-from pca import pca
-from statsmodels.formula.api import logit
-from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score, accuracy_score, recall_score, precision_score, f1_score
-
-from matplotlib import pyplot as plt
-import seaborn as sb
+"""
+통계분석 유틸리티
+@Author: 이광호(leekh4232@gmail.com)
+"""
 import sys
+import numpy as np
+import seaborn as sb
+from pca import pca
+from math import sqrt
+from tabulate import tabulate
+from matplotlib import pyplot as plt
 
+from pandas import DataFrame, MultiIndex, concat, DatetimeIndex, Series
+
+from scipy.stats import t, pearsonr, spearmanr
+from scipy.stats import shapiro, normaltest, ks_2samp, bartlett, fligner, levene, chi2_contingency
+
+from statsmodels.formula.api import ols, logit
+from statsmodels.stats.outliers_influence import variance_inflation_factor
 from statsmodels.graphics.tsaplots import plot_acf, plot_pacf
 from statsmodels.tsa.stattools import adfuller
 from statsmodels.tsa.seasonal import seasonal_decompose
-from tabulate import tabulate
+
+from sklearn.impute import SimpleImputer
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler,PolynomialFeatures
+from sklearn.linear_model import LinearRegression
+from sklearn.metrics import confusion_matrix, roc_curve, roc_auc_score, accuracy_score, recall_score, precision_score, f1_score, r2_score, mean_absolute_error, mean_squared_error
 
 
 def prettyPrint(df, headers="keys", tablefmt="psql", numalign="right", title="value"):
@@ -441,6 +448,77 @@ def spearman_r(df, isPrint=True):
     else:
         return rdf
 
+class RegMetric:
+    def __init__(self, y, y_pred):
+        # 설명력
+        self._r2 = r2_score(y, y_pred)
+        # 평균절대오차
+        self._mae = mean_absolute_error(y, y_pred)
+        # 평균 제곱 오차
+        self._mse = mean_squared_error(y, y_pred)
+        # 평균 오차
+        self._rmse = np.sqrt(self._mse)
+        
+        # 평균 절대 백분오차 비율
+        if type(y) == Series:
+            self._mape = np.mean(np.abs((y.values - y_pred) / y.values) * 100)
+        else:
+            self._mape = np.mean(np.abs((y - y_pred) / y) * 100)
+        
+        # 평균 비율 오차
+        if type(y) == Series:   
+            self._mpe = np.mean((y.values - y_pred) / y.values * 100)
+        else:
+            self._mpe = np.mean((y - y_pred) / y * 100)
+
+    @property
+    def r2(self):
+        return self._r2
+
+    @r2.setter
+    def r2(self, value):
+        self._r2 = value
+
+    @property
+    def mae(self):
+        return self._mae
+
+    @mae.setter
+    def mae(self, value):
+        self._mae = value
+
+    @property
+    def mse(self):
+        return self._mse
+
+    @mse.setter
+    def mse(self, value):
+        self._mse = value
+
+    @property
+    def rmse(self):
+        return self._rmse
+
+    @rmse.setter
+    def rmse(self, value):
+        self._rmse = value
+
+    @property
+    def mape(self):
+        return self._mape
+
+    @mape.setter
+    def mape(self, value):
+        self._mape = value
+
+    @property
+    def mpe(self):
+        return self._mpe
+
+    @mpe.setter
+    def mpe(self, value):
+        self._mpe = value
+
 class OlsResult:
     def __init__(self):
         self._model = None
@@ -450,6 +528,10 @@ class OlsResult:
         self._result = None
         self._goodness = None
         self._varstr = None
+        self._coef = None
+        self._intercept = None
+        self._trainRegMetric = None
+        self._testRegMetric = None
 
     @property
     def model(self):
@@ -528,9 +610,47 @@ class OlsResult:
     def varstr(self, value):
         self._varstr = value
 
+    @property
+    def coef(self):
+        return self._coef
+
+    @coef.setter
+    def coef(self, value):
+        self._coef = value
+
+    @property
+    def intercept(self):
+        return self._intercept
+
+    @intercept.setter
+    def intercept(self, value):
+        self._intercept = value
+        
+    @property
+    def trainRegMetric(self):
+        return self._trainRegMetric
+
+    @trainRegMetric.setter
+    def trainRegMetric(self, value):
+        self._trainRegMetric = value
+
+    @property
+    def testRegMetric(self):
+        return self._testRegMetric
+
+    @testRegMetric.setter
+    def testRegMetric(self, value):
+        self._testRegMetric = value
+        
+    def setRegMetric(self, y_train, y_train_pred, y_test=None, y_test_pred=None):
+        self.trainRegMetric = RegMetric(y_train, y_train_pred)
+        
+        if y_test is not None and y_test_pred is not None:
+            self.testRegMetric = RegMetric(y_test, y_test_pred)
+
 def myOls(data, y=None, x=None, expr=None):
     """
-    로지스틱 회귀분석을 수행한다.
+    회귀분석을 수행한다.
 
     Parameters
     -------
@@ -991,3 +1111,134 @@ def set_datetime_index(df, field=None, inplace=False):
         cdf.index = DatetimeIndex(cdf.index.values, freq=cdf.index.inferred_freq)
         cdf.sort_index(inplace=True)
         return cdf
+
+def convertPoly(data, degree=2, include_bias=False):
+    poly = PolynomialFeatures(degree=degree, include_bias=include_bias)
+    fit = poly.fit_transform(data)
+    x = DataFrame(fit, columns=poly.get_feature_names_out())
+    return x
+
+def getTrend(x, y, degree=2, value_count=100):
+    #[ a, b, c ] ==> ax^2 + bx + c
+    coeff = np.polyfit(x, y, degree)
+    
+    if type(x) == 'list':
+        minx = min(x)
+        maxx = max(x)
+    else:
+        minx = x.min()
+        maxx = x.max()
+        
+    Vtrend = np.linspace(minx, maxx, value_count)
+    
+    Ttrend = coeff[-1]
+    for i in range(0, degree):
+        Ttrend += coeff[i] * Vtrend ** (degree - i)
+        
+    return (Vtrend, Ttrend)
+
+def regplot(x_left, y_left, y_left_pred=None, left_title=None, x_right=None, y_right=None, y_right_pred=None, right_title=None, figsize=(10, 5), save_path=None):
+    subcount = 1 if x_right is None else 2
+    
+    fig, ax = plt.subplots(1, subcount, figsize=figsize)
+    
+    axmain = ax if subcount == 1 else ax[0]
+    
+    # 왼쪽 산점도
+    sb.scatterplot(x=x_left, y=y_left, label='data', ax=axmain)
+    
+    # 왼쪽 추세선
+    x, y = getTrend(x_left, y_left)
+    sb.lineplot(x=x, y=y, color='blue', linestyle="--", ax=axmain)
+    
+    # 왼쪽 추정치
+    if y_left_pred is not None:
+        sb.scatterplot(x=x_left, y=y_left_pred, label='predict', ax=axmain)
+        # 추정치에 대한 추세선
+        x, y = getTrend(x_left, y_left_pred)
+        sb.lineplot(x=x, y=y, color='red', linestyle="--", ax=axmain)
+    
+    if left_title is not None:
+        axmain.set_title(left_title)
+        
+    axmain.legend()
+    axmain.grid()
+    
+    
+    if x_right is not None:
+        # 오른쪽 산점도
+        sb.scatterplot(x=x_right, y=y_right, label='data', ax=ax[1])
+        
+        # 오른쪽 추세선
+        x, y = getTrend(x_right, y_right)
+        sb.lineplot(x=x, y=y, color='blue', linestyle="--", ax=ax[1])
+    
+        # 오른쪽 추정치
+        if y_right_pred is not None:
+            sb.scatterplot(x=x_right, y=y_right_pred, label='predict', ax=ax[1])
+            # 추정치에 대한 추세선
+            x, y = getTrend(x_right, y_right_pred)
+            sb.lineplot(x=x, y=y, color='red', linestyle="--", ax=ax[1])
+        
+        if right_title is not None:
+            ax[1].set_title(right_title)
+            
+        ax[1].legend()
+        ax[1].grid()
+    
+    if save_path is not None:
+        plt.savefig(save_path, dpi=300)
+        
+    plt.show()
+    plt.close()
+    
+
+
+
+    # 머신러닝 회귀분석 모듈 테스트 (06-지도학습(4)_회귀모델_성능_측정지표.ipynb 에서 확인)
+
+def ml_ols(data, xnames, yname, degree=1, test_size=0.25, scalling=False, random_state=777):
+    # 표준화 설정이 되어 있다면 표준화 수행
+    if scalling: 
+        data = scalling(data)
+        
+    # 독립변수 이름이 문자열로 전달되었다면 콤마 단위로 잘라서 리스트로 변환
+    if type(xnames) == str:
+        xnames = xnames.split(',')
+    
+    # 독립변수 추출
+    x = data.filter(xnames)
+    
+    # 종속변수 추출
+    y = data.filter([yname])
+    
+    # 2차식 이상으로 설정되었다면 차수에 맞게 변환, 1인 경우 단순선형회귀  2 이상일때 다중선형회귀 
+    if degree > 1:
+        x = convertPoly(x, degree=degree)
+    
+    # 데이터 분할 비율이 0보다 크다면 분할 수행
+    if test_size > 0:
+        x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=test_size, random_state=random_state)
+    else:
+        x_train = x
+        y_train = y
+        x_test = None
+        y_test = None
+        
+    # 회귀분석 수행
+    model = LinearRegression()
+    fit = model.fit(x_train, y_train)
+    
+    result = OlsResult()
+    result.model = model
+    result.fit = fit
+    result.coef = fit.coef_
+    result.intercept = fit.intercept_
+    
+    if x_test is not None and y_test is not None:
+        result.setRegMetric(y_train, fit.predict(x_train), y_test, fit.predict(x_test))
+    else:
+        result.setRegMetric(y_train, fit.predict(x_train))
+        
+    return result
+    
