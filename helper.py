@@ -1250,7 +1250,7 @@ def regplot(x_left, y_left, y_left_pred=None, left_title=None, x_right=None, y_r
 def ml_ols(data, xnames, yname, degree=1, test_size=0.25, use_scalling=False, random_state=777):
     # 표준화 설정이 되어 있다면 표준화 수행
     if use_scalling:
-        data = use_scalling(data)
+        data = scalling(data)
         
     # 독립변수 이름이 문자열로 전달되었다면 콤마 단위로 잘라서 리스트로 변환
     if type(xnames) == str:
@@ -1360,4 +1360,35 @@ def ml_ols(data, xnames, yname, degree=1, test_size=0.25, use_scalling=False, ra
     })
         
     return result
+
+def tf_result_plot(result, figsize=(15, 5), dpi=150):
+    # 학습 결과에 대한 데이터프레임 생성
+    result_df = DataFrame(result.history)
+    result_df['epochs'] = result_df.index+1
+    result_df.set_index('epochs', inplace=True)
     
+    # 학습 결과 그래프의 컬럼명
+    column_names = result_df.columns
+    
+    # 학습데이터에 대한 필드이름
+    train_column_name = [column_names[0], column_names[1]]
+    
+    # 검증데이터에 대한 필드이름
+    test_column_name = [column_names[2], column_names[3]]
+    
+    # 학습 결과 그래프
+    fig, ax = plt.subplots(1, 2, figsize=figsize, dpi=dpi)
+    
+    for i, v in enumerate(ax):
+        sb.lineplot(x=result_df.index, y=train_column_name[i], data=result_df, color='blue', label=train_column_name[i], ax=v)
+        sb.lineplot(x=result_df.index, y=test_column_name[i], data=result_df, color='orange', label=test_column_name[i], ax=v)
+        v.set_title(train_column_name[i])
+        v.set_xlabel('ephocs')
+        v.set_ylabel(train_column_name[i])
+        v.grid()
+        v.legend()
+    
+    plt.show()
+    plt.close()
+    
+    return result_df
